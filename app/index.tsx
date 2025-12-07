@@ -98,16 +98,87 @@ type TeamRecordMap = Partial<Record<TeamAbbrev, TeamRecord>>;
 
 
 
+function PlayerComp({player}: {player: Player}){
+
+ 
+          const isTargetPlayer = player.id === 8484801;
+
+          return(
+
+            <View key={player.id} 
+            style = {{alignItems:"center"}}
+            > 
+              <View style = {{flexDirection: "row", alignItems: "center"}}>
+              <SvgUri uri={player.teamLogo} width={40} height={40} />
+              
+              <Text style = {isTargetPlayer ? styles.mackName : styles.name}>
+                {player.firstName} {player.lastName} - {player.points} 
+
+              </Text>
+            
+
+            </View>
+            
+            
+          </View>
+          );
+
+
+}
+
+function LiveGameRow({game}: {game: TodaysGame}){
+
+  return(
+
+    
+    <View key={game.id} style = {styles.liveGameLayout}>
+      
+      <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
+      <Text style = {{fontSize: 50, color: 'white'}}> {game.awayTeamScore}-{game.homeTeamScore}</Text>
+      <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
+
+    </View>
+
+
+  );
+}
+
+function TodaysGame({games}:{games:TodaysGame[]}){
+  if(games.length <= 0) return;
+  
+  return(
+      <View>
+            <Text style = {styles.heading1}>Todays Game</Text>
+
+          <View style = {styles.block2}>
+            
+            {games.map((game) => (
+              
+              <LiveGameRow key={game.id} game={game}/>
+              
+
+            ))}
+
+          </View>
+
+          </View>
+
+
+);
+
+}
+
+
 export default function Index() {
-
+  
   const [players, setPlayers] = useState<Player[]>([]);
-
+  
   const [games, setGames] = useState<NextSharksGames[]>([]);
-
+  
   const [teamRecords, setRecords] = useState<TeamRecordMap>({});
-
+  
   const [todaysGames, setTodaysGames] = useState<TodaysGame[]>([]);
-
+  
   useEffect(() => {
     //fetch data for the top ten point scorers in the NHL as of the current moment
     fetchPointScorers();
@@ -117,9 +188,69 @@ export default function Index() {
     fetchStandings();
     //fetch data from todays games accross the NHL at the current moment
     fetchTodaysGames();
-
+    
   },[])
-
+  
+  const formatRecord = (abbrev: TeamAbbrev) => {
+  
+    const rec = teamRecords[abbrev];
+    if(!rec) return "t";
+  
+    return `${rec.wins}-${rec.losses}-${rec.otLosses}`;
+  
+  };
+  
+  function ThisWeeksSharksGames({games}:{games:NextSharksGames[]}){
+  
+    return(
+  
+        <View>
+        
+          <Text style = {styles.heading1}>Upcoming Games</Text>
+          <View style = {styles.block1}>
+  
+          {games.map((game) =>(
+  
+            
+  
+            <View key={game.id}
+              style = {{
+                justifyContent: 'center', flexDirection: 'row', alignItems: 'center', 
+  
+              }}
+            >
+              
+              <View style = {{alignContent: 'center'}}>
+                  <SvgUri uri={game.awayTeamLogo} width={100} height={100}/>
+                  <Text style = {styles.teamRecord}>{formatRecord(game.awayTeamAbbrev)}</Text>
+  
+  
+              </View>
+  
+              
+              <View style = {{alignItems: 'center'}}>
+                  <Text style = {styles.date}> {game.date}</Text>
+                  <Text style = {{fontSize: 50}}> - </Text>
+  
+              </View>
+              
+  
+              <View style = {{alignContent: 'center'}}>
+                  <SvgUri uri={game.homeTeamLogo} width={100} height={100}/>
+                  <Text style = {styles.teamRecord}>{formatRecord(game.homeTeamAbbrev)}</Text>
+  
+  
+              </View>
+            </View>
+  
+               
+            
+          ))}
+        
+        </View></View>
+  
+    );
+  }
 
   const fetchSharksWeekSchedule = async () => {
 
@@ -238,14 +369,6 @@ export default function Index() {
     }
   }
 
-  const formatRecord = (abbrev: TeamAbbrev) => {
-
-    const rec = teamRecords[abbrev];
-    if(!rec) return "t";
-
-    return `${rec.wins}-${rec.losses}-${rec.otLosses}`;
-
-  };
 
   const sharksGameToday = todaysGames.length > 0;
 
@@ -255,80 +378,22 @@ export default function Index() {
     <ScrollView
      contentContainerStyle = {{gap: 20, padding:30}}
      style = {{backgroundColor: sharksColors.black}}
-     
     >
       
 
       
         {sharksGameToday ? (
-          <View>
-            <Text style = {styles.heading1}>Todays Game</Text>
+          
 
-          <View style = {styles.block2}>
-            
-            {todaysGames.map((todaysGame) => (
-              <View key={todaysGame.id} style = {styles.liveGameLayout}>
-                
-                <SvgUri uri = {todaysGame.awayTeamLogo} width={120} height={120}/>
-                <Text style = {{fontSize: 50, color: 'white'}}> {todaysGame.awayTeamScore}-{todaysGame.homeTeamScore}</Text>
-                <SvgUri uri = {todaysGame.homeTeamLogo} width={120} height={120}/>
-
-              </View>
-              
-
-            ))}
-
-          </View>
-
-          </View>
+          <TodaysGame games = {todaysGames}/>
 
 
         ) : (
 
-        <View>
-      
-        <Text style = {styles.heading1}>Upcoming Games</Text>
-        <View style = {styles.block1}>
-
-        {games.map((game) =>(
-
-          
-
-          <View key={game.id}
-            style = {{
-              justifyContent: 'center', flexDirection: 'row', alignItems: 'center', 
-
-            }}
-          >
-            
-            <View style = {{alignContent: 'center'}}>
-                <SvgUri uri={game.awayTeamLogo} width={100} height={100}/>
-                <Text style = {styles.teamRecord}>{formatRecord(game.awayTeamAbbrev)}</Text>
-
-
-            </View>
-
-            
-            <View style = {{alignItems: 'center'}}>
-                <Text style = {styles.date}> {game.date}</Text>
-                <Text style = {{fontSize: 50}}> - </Text>
-
-            </View>
-            
-
-            <View style = {{alignContent: 'center'}}>
-                <SvgUri uri={game.homeTeamLogo} width={100} height={100}/>
-                <Text style = {styles.teamRecord}>{formatRecord(game.homeTeamAbbrev)}</Text>
-
-
-            </View>
-          </View>
-
-             
-          
-        ))}
-      
-      </View></View> )}
+          <ThisWeeksSharksGames games={games}/>
+        
+        
+        )}
 
 
 
@@ -340,35 +405,16 @@ export default function Index() {
         
       <View style = {styles.block1}>
     
-          {players.map(player => {
+          {players.map(player => (
 
-          const isTargetPlayer = player.id === 8484801;
+            <PlayerComp key={player.id} player={player}/>
+          ))}
 
-          return(
-
-            <View key={player.id} 
-            style = {{alignItems:"center"}}
-            > 
-              <View style = {{flexDirection: "row", alignItems: "center"}}>
-              <SvgUri uri={player.teamLogo} width={40} height={40} />
-              
-              <Text style = {isTargetPlayer ? styles.mackName : styles.name}>
-                {player.firstName} {player.lastName} - {player.points} 
-
-              </Text>
-            
-
-            </View>
-            
-            
-          </View>
-          )
-
-        })}
+         </View> 
 
       
 
-      </View>
+      
       
     </ScrollView>
   );
