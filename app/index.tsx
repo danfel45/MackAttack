@@ -50,6 +50,7 @@ interface TeamRecord{
   points: number,
 }
 
+//Set of all SJS colors
 const sharksColors = {
 
   teal: "#006E7F",
@@ -59,7 +60,7 @@ const sharksColors = {
 
 }
 
-
+//Set of team primary colors in NHL
 const teamColor = {
   ANA: "#F47A38", // Ducks
   UTA: "#9ADBE8", // Mammoth
@@ -101,7 +102,7 @@ type TeamAbbrev = keyof typeof teamColor;
 type TeamRecordMap = Partial<Record<TeamAbbrev, TeamRecord>>;
 
 
-
+//UI Component displaying point leaders in NHL
 function PlayerComp({player}: {player: Player}){
 
  
@@ -130,6 +131,7 @@ function PlayerComp({player}: {player: Player}){
 
 }
 
+//UI Component handling the actual live game score
 function LiveGameRow({game}: {game: TodaysGame}){
 
   return(
@@ -159,10 +161,64 @@ function LiveGameRow({game}: {game: TodaysGame}){
   );
 }
 
+//UI Component wrapper to hold the score UI, changes depending on state of todays game
 function TodaysGame({games}:{games:TodaysGame[]}){
-  if(games.length <= 0) return;
   
-  return(
+  
+  
+  if(games.length <= 0) return;
+
+  
+
+  if(games[0].gameState === "LIVE"){
+    return(
+
+    
+      <View>
+            <Text style = {styles.heading1}>Todays Game</Text>
+
+          <View style = {styles.block2}>
+            
+            {games.map((game) => (
+              
+              <LiveGameRow key={game.id} game={game}/>
+              
+
+            ))}
+
+          </View>
+
+          </View>
+
+
+);
+  }
+  else if(games[0].gameState === "OFF"){
+        return(
+
+    
+      <View>
+            <Text style = {styles.heading1}>Todays Game</Text>
+
+          <View style = {styles.block2}>
+            
+            {games.map((game) => (
+              
+              <LiveGameRow key={game.id} game={game}/>
+              
+
+            ))}
+
+          </View>
+
+          </View>
+
+
+);
+  }else if(games[0].gameState === "PRE"){
+      return(
+
+    
       <View>
             <Text style = {styles.heading1}>Todays Game</Text>
 
@@ -182,7 +238,13 @@ function TodaysGame({games}:{games:TodaysGame[]}){
 
 );
 
+  }
+  
+  
+
 }
+
+
 
 
 export default function Index() {
@@ -392,6 +454,8 @@ export default function Index() {
 
   const sharksGameToday = todaysGames.length > 0;
 
+
+
   return (
     
 
@@ -403,6 +467,7 @@ export default function Index() {
 
       
         {sharksGameToday ? (
+          
           
 
           <TodaysGame games = {todaysGames}/>
