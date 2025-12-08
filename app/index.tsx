@@ -34,6 +34,10 @@ interface TodaysGame{
   awayTeam: string,
   awayTeamLogo: string,
   awayTeamScore: number,
+  currentPeriod: number,
+  timeLeft: number,
+  inIntermission: boolean,
+  gameState: string,
 
 }
 
@@ -130,14 +134,26 @@ function LiveGameRow({game}: {game: TodaysGame}){
 
   return(
 
+   <View>
     
+      <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>{game.inIntermission ? "INT" : "Period: " + game.currentPeriod} -- {game.timeLeft}</Text>
     <View key={game.id} style = {styles.liveGameLayout}>
       
       <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
+      
       <Text style = {{fontSize: 50, color: 'white'}}> {game.awayTeamScore}-{game.homeTeamScore}</Text>
+      
       <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
 
     </View>
+    </View>
+
+    
+    
+    
+
+
+  
 
 
   );
@@ -328,6 +344,10 @@ export default function Index() {
         awayTeam: t.awayTeam.name.default,
         awayTeamLogo: t.awayTeam.logo,
         awayTeamScore: t.awayTeam.score,
+        currentPeriod: t.period,
+        timeLeft: t.clock.timeRemaining,
+        inIntermission: t.clock.inIntermission,
+        gameState: t.gameState,
 
 
       }));
