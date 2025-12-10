@@ -25,6 +25,12 @@ interface NextSharksGames{
   date: string,
 }
 
+type SharksSched = {
+
+
+
+}
+
 
 interface TodaysGame{
   id: number,
@@ -38,6 +44,13 @@ interface TodaysGame{
   timeLeft: number,
   inIntermission: boolean,
   gameState: string,
+
+}
+
+//Prop from the TodaysGame interface
+type LiveGameProp = {
+
+  game: TodaysGame;
 
 }
 
@@ -131,38 +144,76 @@ function PlayerComp({player}: {player: Player}){
 
 }
 
-//UI Component handling the actual live game score
-function LiveGameRow({game}: {game: TodaysGame}){
+//Component to display the scoreboard while game is live
+const LiveGameComp = ({game}: LiveGameProp) => {
 
   return(
 
-   <View>
+    <View>
     
       <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>{game.inIntermission ? "INT" : "Period: " + game.currentPeriod} -- {game.timeLeft}</Text>
+      <View key={game.id} style = {styles.liveGameLayout}>
+      
+        <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
+      
+        <Text style = {{fontSize: 50, color: 'white'}}> {game.awayTeamScore}-{game.homeTeamScore}</Text>
+      
+        <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
+
+      </View>
+    </View>
+
+  );
+
+}
+
+//Component to display the scoreboard during gameday, but before game has started
+const PreGameComp = ({game}: LiveGameProp) => {
+
+  return(
+
     <View key={game.id} style = {styles.liveGameLayout}>
       
-      <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
+        <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
       
-      <Text style = {{fontSize: 50, color: 'white'}}> {game.awayTeamScore}-{game.homeTeamScore}</Text>
+        <Text style = {{fontSize: 50, color: 'white'}}> - </Text>
       
-      <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
+        <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
 
     </View>
+
+
+  );
+
+}
+
+//Component to display the scoreboard during gameday, but after the game has finished
+const PostGameComp = ({game}: LiveGameProp) => {
+
+
+  return(
+    <View>
+      <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>FINAL</Text>
+      <View key={game.id} style = {styles.liveGameLayout}>
+      
+        <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
+      
+        <Text style = {{fontSize: 50, color: 'white'}}> {game.awayTeamScore}-{game.homeTeamScore}</Text>
+      
+        <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
+
+      </View>
     </View>
-
-    
-    
-    
-
-
-  
-
 
   );
 }
 
-//UI Component wrapper to hold the score UI, changes depending on state of todays game
+
+
+
+//Function that determines which gameday scoreboard to display, depending on the current state of the game (PRE/FUT, LIVE, FINAL/OFF)
 function TodaysGame({games}:{games:TodaysGame[]}){
+  
   
   
   
@@ -170,79 +221,72 @@ function TodaysGame({games}:{games:TodaysGame[]}){
 
   
 
-  if(games[0].gameState === "LIVE"){
+  
+  if(games[0].gameState === "FUT" || games[0].gameState === "PRE"){
+    
+    
+    return(
+    <View>
+        
+        
+        <View style = {styles.block2}>
+            
+            {games.map((game) => (
+              
+              <PreGameComp key={game.id} game={game}/>
+              
+
+            ))}
+
+          </View>
+          
+
+    </View>
+
+
+  );} else if(games[0].gameState === "LIVE"){
+    
     return(
 
     
       <View>
-            <Text style = {styles.heading1}>Todays Game</Text>
 
-          <View style = {styles.block2}>
-            
-            {games.map((game) => (
-              
-              <LiveGameRow key={game.id} game={game}/>
-              
+          {games.map((game) => (
 
-            ))}
+              <LiveGameComp key={game.id} game={game}/>
+          ))}
 
-          </View>
-
-          </View>
+        </View>
 
 
-);
-  }
-  else if(games[0].gameState === "OFF"){
-        return(
+  );} else if(games[0].gameState === "OFF" || games[0].gameState === "FINAL"){
+        
+    return(
 
     
       <View>
-            <Text style = {styles.heading1}>Todays Game</Text>
 
-          <View style = {styles.block2}>
+        <View style = {styles.block2}>
             
             {games.map((game) => (
               
-              <LiveGameRow key={game.id} game={game}/>
+              <PostGameComp key={game.id} game={game}/>
               
 
             ))}
 
-          </View>
+        </View>
 
-          </View>
-
-
-);
-  }else if(games[0].gameState === "PRE"){
-      return(
-
-    
-      <View>
-            <Text style = {styles.heading1}>Todays Game</Text>
-
-          <View style = {styles.block2}>
-            
-            {games.map((game) => (
-              
-              <LiveGameRow key={game.id} game={game}/>
-              
-
-            ))}
-
-          </View>
-
-          </View>
+      </View>
 
 
-);
-
-  }
-  
-  
+  );}
 
 }
+  
+  
+
+
 
 
 
@@ -266,6 +310,8 @@ export default function Index() {
     fetchStandings();
     //fetch data from todays games accross the NHL at the current moment
     fetchTodaysGames();
+
+    
     
   },[])
   
@@ -467,10 +513,14 @@ export default function Index() {
 
       
         {sharksGameToday ? (
-          
-          
 
-          <TodaysGame games = {todaysGames}/>
+          <View>
+
+            <Text style = {styles.heading1}>Todays Game</Text>
+          
+            <TodaysGame games = {todaysGames}/>
+
+          </View>
 
 
         ) : (
@@ -481,9 +531,6 @@ export default function Index() {
         )}
 
 
-
-
-      
       <Text style = {styles.heading2}>Macklin Art Ross Watch</Text>
 
 
