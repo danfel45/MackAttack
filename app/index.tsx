@@ -23,6 +23,7 @@ interface NextSharksGames{
   awayTeamAbbrev: TeamAbbrev,
   startTime: string,
   date: string,
+
 }
 
 type SharksSched = {
@@ -37,13 +38,17 @@ interface TodaysGame{
   homeTeam: string,
   homeTeamLogo: string,
   homeTeamScore: number,
+  homeTeamRecord: string,
   awayTeam: string,
   awayTeamLogo: string,
   awayTeamScore: number,
+  awayTeamRecord: string,
   currentPeriod: number,
   timeLeft: number,
   inIntermission: boolean,
   gameState: string,
+  venue: string,
+  startTime: string,
 
 }
 
@@ -115,31 +120,32 @@ type TeamAbbrev = keyof typeof teamColor;
 type TeamRecordMap = Partial<Record<TeamAbbrev, TeamRecord>>;
 
 
+
 //UI Component displaying point leaders in NHL
 function PlayerComp({player}: {player: Player}){
 
  
-          const isTargetPlayer = player.id === 8484801;
+    const isTargetPlayer = player.id === 8484801;
 
-          return(
+    return(
 
-            <View key={player.id} 
-            style = {{alignItems:"center"}}
-            > 
-              <View style = {{flexDirection: "row", alignItems: "center"}}>
-              <SvgUri uri={player.teamLogo} width={40} height={40} />
-              
-              <Text style = {isTargetPlayer ? styles.mackName : styles.name}>
-                {player.firstName} {player.lastName} - {player.points} 
+      <View key={player.id} 
+      style = {{alignItems:"center"}}
+      > 
+        <View style = {{flexDirection: "row", alignItems: "center"}}>
+        <SvgUri uri={player.teamLogo} width={40} height={40} />
+        
+        <Text style = {isTargetPlayer ? styles.mackName : styles.name}>
+          {player.firstName} {player.lastName} - {player.points} 
 
-              </Text>
-            
+        </Text>
+      
 
-            </View>
-            
-            
-          </View>
-          );
+        </View>
+      
+      
+      </View>
+    );
 
 
 }
@@ -147,39 +153,47 @@ function PlayerComp({player}: {player: Player}){
 //Component to display the scoreboard while game is live
 const LiveGameComp = ({game}: LiveGameProp) => {
 
-  return(
+    return(
 
-    <View>
-    
-      <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>{game.inIntermission ? "INT" : "Period: " + game.currentPeriod} -- {game.timeLeft}</Text>
-      <View key={game.id} style = {styles.liveGameLayout}>
+      <View>
       
-        <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
-      
-        <Text style = {{fontSize: 50, color: 'white'}}> {game.awayTeamScore}-{game.homeTeamScore}</Text>
-      
-        <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
+        <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>{game.inIntermission ? "INT" : "Period: " + game.currentPeriod} -- {game.timeLeft}</Text>
+        <View key={game.id} style = {styles.liveGameLayout}>
+        
+          <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
+          
+        
+          <Text style = {{fontSize: 50, color: 'white'}}> {game.awayTeamScore}-{game.homeTeamScore}</Text>
+        
+          <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
 
+        </View>
       </View>
-    </View>
 
-  );
+    );
 
 }
 
 //Component to display the scoreboard during gameday, but before game has started
 const PreGameComp = ({game}: LiveGameProp) => {
 
+  console.log("Time: " + game.startTime)
   return(
+    <View>
+      <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>{game.venue} - {game.startTime}</Text>
+      <View key={game.id} style = {styles.liveGameLayout}>
+          <View style = {{alignContent: 'center'}}>
+            <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
+            <Text style = {styles.teamRecord}>{game.awayTeamRecord}</Text>
+          </View>
+          <Text style = {{fontSize: 50, color: 'white'}}> - </Text>
+      
+          <View style = {{alignContent: 'center'}}>
+            <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
+            <Text style = {styles.teamRecord}>{game.homeTeamRecord}</Text>
+          </View>
 
-    <View key={game.id} style = {styles.liveGameLayout}>
-      
-        <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
-      
-        <Text style = {{fontSize: 50, color: 'white'}}> - </Text>
-      
-        <SvgUri uri = {game.homeTeamLogo} width={120} height={120}/>
-
+      </View>
     </View>
 
 
@@ -193,7 +207,7 @@ const PostGameComp = ({game}: LiveGameProp) => {
 
   return(
     <View>
-      <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>FINAL</Text>
+      <Text style = {{textAlign:'center', fontWeight:'bold', paddingTop:10, color: sharksColors.white}}>{game.venue} - FINAL</Text>
       <View key={game.id} style = {styles.liveGameLayout}>
       
         <SvgUri uri = {game.awayTeamLogo} width={120} height={120}/>
@@ -436,6 +450,17 @@ export default function Index() {
 
   }
 
+  const toPacificTime = (utc:string) => {
+    return new Date(utc).toLocaleTimeString("en-US",{
+      timeZone: "America/Los_Angeles",
+      hour: "numeric",
+      minute: "2-digit",
+      
+    });
+
+
+  };
+
   const fetchTodaysGames = async () => {
     try{
       const result = await fetch("https://api-web.nhle.com/v1/score/now");
@@ -449,13 +474,17 @@ export default function Index() {
         homeTeam: t.homeTeam.name.default,
         homeTeamLogo: t.homeTeam.logo,
         homeTeamScore: t.homeTeam.score,
+        homeTeamRecord: t.homeTeam.record,
         awayTeam: t.awayTeam.name.default,
         awayTeamLogo: t.awayTeam.logo,
         awayTeamScore: t.awayTeam.score,
+        awayTeamRecord: t.awayTeam.record,
         currentPeriod: t.period,
-        timeLeft: t.clock.timeRemaining,
-        inIntermission: t.clock.inIntermission,
+        timeLeft: t.clock?.timeRemaining ?? "",
+        inIntermission: t.clock?.inIntermission ?? false,
         gameState: t.gameState,
+        venue: t.venue.default,
+        startTime: toPacificTime(t.startTimeUTC),
 
 
       }));
@@ -468,6 +497,11 @@ export default function Index() {
 
 
   }
+
+  
+  
+
+  
 
   const fetchPointScorers = async () => {
 
@@ -500,6 +534,7 @@ export default function Index() {
 
   const sharksGameToday = todaysGames.length > 0;
 
+  
 
 
   return (
@@ -513,7 +548,7 @@ export default function Index() {
 
       
         {sharksGameToday ? (
-
+          
           <View>
 
             <Text style = {styles.heading1}>Todays Game</Text>
@@ -584,6 +619,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: sharksColors.white,
+    paddingBottom: 10,
 
   },
 
